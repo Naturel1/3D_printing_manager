@@ -2,10 +2,12 @@ import './App.css';
 
 function App() {
   const navItems = [
-    { label: 'Accueil', href: '/accueil' },
-    { label: 'Imprimantes', href: '/imprimantes' },
-    { label: 'Taches', href: '/taches' },
+    { label: 'hub', href: '/' },
+    { label: 'Orders', href: '/orders' },
+    { label: 'Printers', href: '/printers' },
     { label: 'Filaments', href: '/filaments' },
+    { label: 'Customers', href: '/customers' },
+    {label: 'Price calculator', href: '/pricecalculator' },
     { label: 'Parametres', href: '/parametres' },
   ];
 
