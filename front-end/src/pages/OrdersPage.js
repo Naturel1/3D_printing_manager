@@ -1,24 +1,37 @@
 import { useEffect, useState } from 'react';
 
+function formatDate(value) {
+  if (!value) {
+    return '-';
+  }
+
+  return new Intl.DateTimeFormat('fr-BE', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(value));
+}
+
 function OrdersPage({ onNavigate }) {
-  const [orders, setOrders] = useState([]);
+  const [orderGroups, setOrderGroups] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [newOrder, setNewOrder] = useState({
+  const [newOrderGroup, setNewOrderGroup] = useState({
+    customer_id: '',
+    due_date: '',
+    price: '',
     name: '',
     status: 'pending',
+    quantity: 1,
+    note: '',
   });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
-  const [statusEdits, setStatusEdits] = useState({});
-  const [updatingOrderId, setUpdatingOrderId] = useState(null);
-  const [statusError, setStatusError] = useState('');
 
   useEffect(() => {
     const controller = new AbortController();
 
-    async function loadOrders() {
+    async function loadOrderGroups() {
       setLoading(true);
       setError('');
 
@@ -32,36 +45,31 @@ function OrdersPage({ onNavigate }) {
         }
 
         const data = await response.json();
-        const nextOrders = Array.isArray(data) ? data : [];
-        setOrders(nextOrders);
-        setStatusEdits(
-          nextOrders.reduce(
-            (edits, order) => ({
-              ...edits,
-              [order.id]: order.status,
-            }),
-            {}
-          )
-        );
+        setOrderGroups(Array.isArray(data) ? data : []);
       } catch (fetchError) {
         if (fetchError.name !== 'AbortError') {
-          setError('Impossible de charger les commandes depuis Flask.');
+          setError('Impossible de charger les groupes de commandes depuis Flask.');
         }
       } finally {
         setLoading(false);
       }
     }
 
-    loadOrders();
+    loadOrderGroups();
 
     return () => controller.abort();
   }, []);
 
-  const handleCreateOrder = async (event) => {
+  const handleCreateOrderGroup = async (event) => {
     event.preventDefault();
     setFormError('');
 
-    const trimmedName = newOrder.name.trim();
+    const trimmedName = newOrderGroup.name.trim();
+    if (!newOrderGroup.customer_id) {
+      setFormError('Le client est requis.');
+      return;
+    }
+
     if (!trimmedName) {
       setFormError('Le nom de la commande est requis.');
       return;
@@ -76,66 +84,37 @@ function OrdersPage({ onNavigate }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          customer_id: newOrderGroup.customer_id,
+          due_date: newOrderGroup.due_date,
+          price: newOrderGroup.price,
           name: trimmedName,
-          status: newOrder.status,
+          status: newOrderGroup.status,
+          quantity: newOrderGroup.quantity,
+          note: newOrderGroup.note,
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `API error: ${response.status}`);
       }
 
-      const createdOrder = await response.json();
-      setOrders((currentOrders) => [...currentOrders, createdOrder]);
-      setStatusEdits((currentEdits) => ({
-        ...currentEdits,
-        [createdOrder.id]: createdOrder.status,
-      }));
-      setNewOrder({
+      const createdOrderGroup = await response.json();
+      setOrderGroups((currentOrderGroups) => [...currentOrderGroups, createdOrderGroup]);
+      setNewOrderGroup({
+        customer_id: '',
+        due_date: '',
+        price: '',
         name: '',
         status: 'pending',
+        quantity: 1,
+        note: '',
       });
       setShowForm(false);
     } catch (createError) {
-      setFormError('Impossible de creer la commande dans Flask.');
+      setFormError(createError.message || 'Impossible de creer le groupe de commandes dans Flask.');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleUpdateStatus = async (order) => {
-    setStatusError('');
-    setUpdatingOrderId(order.id);
-
-    try {
-      const response = await fetch(`/api/orders/${order.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: statusEdits[order.id] || order.status,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const updatedOrder = await response.json();
-      setOrders((currentOrders) =>
-        currentOrders.map((currentOrder) =>
-          currentOrder.id === updatedOrder.id ? updatedOrder : currentOrder
-        )
-      );
-      setStatusEdits((currentEdits) => ({
-        ...currentEdits,
-        [updatedOrder.id]: updatedOrder.status,
-      }));
-    } catch (updateError) {
-      setStatusError('Impossible de modifier le status de la commande.');
-    } finally {
-      setUpdatingOrderId(null);
     }
   };
 
@@ -144,7 +123,7 @@ function OrdersPage({ onNavigate }) {
       <div className="section-header">
         <div>
           <h1>Orders</h1>
-          <p>Liste des commandes envoyee par Flask via `/api/orders/`.</p>
+          <p>Liste des groupes de commandes envoyee par Flask via `/api/orders/`.</p>
         </div>
         <button
           className="primary-button"
@@ -154,21 +133,68 @@ function OrdersPage({ onNavigate }) {
             setFormError('');
           }}
         >
-          Ajouter une commande
+          Ajouter un groupe
         </button>
       </div>
 
       {showForm && (
-        <form className="order-form" onSubmit={handleCreateOrder}>
+        <form className="order-form" onSubmit={handleCreateOrderGroup}>
           <label>
-            Nom
+            Client
+            <input
+              name="customer_id"
+              type="number"
+              min="1"
+              value={newOrderGroup.customer_id}
+              onChange={(event) =>
+                setNewOrderGroup((currentOrderGroup) => ({
+                  ...currentOrderGroup,
+                  customer_id: event.target.value,
+                }))
+              }
+              placeholder="1"
+            />
+          </label>
+          <label>
+            Date limite
+            <input
+              name="due_date"
+              type="datetime-local"
+              value={newOrderGroup.due_date}
+              onChange={(event) =>
+                setNewOrderGroup((currentOrderGroup) => ({
+                  ...currentOrderGroup,
+                  due_date: event.target.value,
+                }))
+              }
+            />
+          </label>
+          <label>
+            Prix
+            <input
+              name="price"
+              type="number"
+              min="0"
+              step="0.01"
+              value={newOrderGroup.price}
+              onChange={(event) =>
+                setNewOrderGroup((currentOrderGroup) => ({
+                  ...currentOrderGroup,
+                  price: event.target.value,
+                }))
+              }
+              placeholder="0.00"
+            />
+          </label>
+          <label>
+            Commande
             <input
               name="name"
               type="text"
-              value={newOrder.name}
+              value={newOrderGroup.name}
               onChange={(event) =>
-                setNewOrder((currentOrder) => ({
-                  ...currentOrder,
+                setNewOrderGroup((currentOrderGroup) => ({
+                  ...currentOrderGroup,
                   name: event.target.value,
                 }))
               }
@@ -179,10 +205,10 @@ function OrdersPage({ onNavigate }) {
             Status
             <select
               name="status"
-              value={newOrder.status}
+              value={newOrderGroup.status}
               onChange={(event) =>
-                setNewOrder((currentOrder) => ({
-                  ...currentOrder,
+                setNewOrderGroup((currentOrderGroup) => ({
+                  ...currentOrderGroup,
                   status: event.target.value,
                 }))
               }
@@ -191,6 +217,36 @@ function OrdersPage({ onNavigate }) {
               <option value="in_progress">in_progress</option>
               <option value="done">done</option>
             </select>
+          </label>
+          <label>
+            Quantite
+            <input
+              name="quantity"
+              type="number"
+              min="1"
+              value={newOrderGroup.quantity}
+              onChange={(event) =>
+                setNewOrderGroup((currentOrderGroup) => ({
+                  ...currentOrderGroup,
+                  quantity: event.target.value,
+                }))
+              }
+            />
+          </label>
+          <label>
+            Note
+            <input
+              name="note"
+              type="text"
+              value={newOrderGroup.note}
+              onChange={(event) =>
+                setNewOrderGroup((currentOrderGroup) => ({
+                  ...currentOrderGroup,
+                  note: event.target.value,
+                }))
+              }
+              placeholder="Optionnel"
+            />
           </label>
           <button className="primary-button" type="submit" disabled={saving}>
             {saving ? 'Ajout...' : 'Enregistrer'}
@@ -204,73 +260,50 @@ function OrdersPage({ onNavigate }) {
 
       {!loading && !error && (
         <div className="table-wrap">
-          {statusError && <div className="state-message error">{statusError}</div>}
           <table className="orders-table">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Nom</th>
+                <th>Groupe</th>
+                <th>Client</th>
                 <th>Status</th>
-                <th className="actions-column">Actions</th>
+                <th>Commandes</th>
+                <th>Commande le</th>
+                <th>Date limite</th>
+                <th>Prix</th>
               </tr>
             </thead>
             <tbody>
-              {orders.length === 0 ? (
+              {orderGroups.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="empty-cell">
-                    Aucune commande a afficher.
+                  <td colSpan="7" className="empty-cell">
+                    Aucun groupe de commandes a afficher.
                   </td>
                 </tr>
               ) : (
-                orders.map((order) => (
-                  <tr key={order.id}>
-                    <td>{order.id}</td>
+                orderGroups.map((orderGroup) => (
+                  <tr key={orderGroup.id}>
                     <td>
                       <a
                         className="table-link"
-                        href={`/orders/${order.id}`}
+                        href={`/orders/${orderGroup.id}`}
                         onClick={(event) => {
                           if (!onNavigate) {
                             return;
                           }
 
                           event.preventDefault();
-                          onNavigate(`/orders/${order.id}`);
+                          onNavigate(`/orders/${orderGroup.id}`);
                         }}
                       >
-                        {order.name}
+                        Groupe #{orderGroup.id}
                       </a>
                     </td>
-                    <td>{order.status}</td>
-                    <td>
-                      <div className="row-actions">
-                        <select
-                          aria-label={`Status de ${order.name}`}
-                          value={statusEdits[order.id] || order.status}
-                          onChange={(event) =>
-                            setStatusEdits((currentEdits) => ({
-                              ...currentEdits,
-                              [order.id]: event.target.value,
-                            }))
-                          }
-                        >
-                          <option value="pending">pending</option>
-                          <option value="in_progress">in_progress</option>
-                          <option value="done">done</option>
-                        </select>
-                        <button
-                          className="secondary-button"
-                          type="button"
-                          disabled={
-                            updatingOrderId === order.id ||
-                            (statusEdits[order.id] || order.status) === order.status
-                          }
-                          onClick={() => handleUpdateStatus(order)}
-                        >
-                          {updatingOrderId === order.id ? 'Modification...' : 'Modifier'}
-                        </button>
-                      </div>
-                    </td>
+                    <td>{orderGroup.customer_id}</td>
+                    <td>{orderGroup.status}</td>
+                    <td>{orderGroup.orders_count}</td>
+                    <td>{formatDate(orderGroup.ordered)}</td>
+                    <td>{formatDate(orderGroup.due_date)}</td>
+                    <td>{orderGroup.price || '-'}</td>
                   </tr>
                 ))
               )}
