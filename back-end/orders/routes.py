@@ -22,7 +22,7 @@ def get_single_order(order_id):
 @orders_api_bp.post("/")
 def add_order():
     payload = request.get_json(silent=True) or {}
-    if "name" not in payload:
+    if not payload.get("name", "").strip():
         return jsonify(error="Field 'name' is required"), 400
 
     new_order = create_order(payload)

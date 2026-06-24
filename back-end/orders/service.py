@@ -24,7 +24,7 @@ def create_order(payload):
     new_id = max((order["id"] for order in _orders), default=0) + 1
     new_order = {
         "id": new_id,
-        "name": payload.get("name", f"Order {new_id:03d}"),
+        "name": payload.get("name", f"Order {new_id:03d}").strip(),
         "status": payload.get("status", "pending"),
     }
     _orders.append(new_order)
