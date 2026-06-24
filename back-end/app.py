@@ -1,17 +1,24 @@
 from flask import Flask, jsonify
 
-app = Flask(__name__)
+from orders import orders_api_bp
 
-@app.route('/')
+app = Flask(__name__)
+app.register_blueprint(orders_api_bp, url_prefix="/api/orders")
+
+
+@app.route("/")
 def home():
     return jsonify(message="Hello from Flask!")
 
-@app.route('/api/data')
+
+@app.route("/api/data")
 def get_data():
     data = {
         "items": ["apple", "banana", "orange"],
-        "source": "Flask API"
+        "source": "Flask API",
     }
     return jsonify(data)
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     app.run(debug=True)

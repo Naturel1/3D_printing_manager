@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, ForeignKey, Integer, Text
+from sqlalchemy import CheckConstraint, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.database import Base
@@ -13,6 +13,8 @@ class Order(Base):
     __tablename__ = "orders"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="pending")
     order_group_id: Mapped[int] = mapped_column(
         "order_groupe_id",
         ForeignKey("order_groupe.id"),
@@ -30,7 +32,13 @@ class Order(Base):
         default=1,
     )
 
-    __table_args__ = (CheckConstraint("quantity > 0", name="chk_positive_quantity"),)
+    __table_args__ = (
+        CheckConstraint("quantity > 0", name="chk_positive_quantity"),
+        CheckConstraint(
+            "status in ('pending', 'in_progress', 'done')",
+            name="chk_order_status",
+        ),
+    )
 
     order_group: Mapped["OrderGroup"] = relationship("OrderGroup", back_populates="orders")
     three_d_file: Mapped["ThreeDFile | None"] = relationship(
