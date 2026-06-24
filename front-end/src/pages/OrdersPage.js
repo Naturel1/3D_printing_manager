@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-function OrdersPage() {
+function OrdersPage({ onNavigate }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -225,7 +225,22 @@ function OrdersPage() {
                 orders.map((order) => (
                   <tr key={order.id}>
                     <td>{order.id}</td>
-                    <td>{order.name}</td>
+                    <td>
+                      <a
+                        className="table-link"
+                        href={`/orders/${order.id}`}
+                        onClick={(event) => {
+                          if (!onNavigate) {
+                            return;
+                          }
+
+                          event.preventDefault();
+                          onNavigate(`/orders/${order.id}`);
+                        }}
+                      >
+                        {order.name}
+                      </a>
+                    </td>
                     <td>{order.status}</td>
                     <td>
                       <div className="row-actions">

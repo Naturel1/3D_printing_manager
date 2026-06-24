@@ -213,6 +213,19 @@
   border-bottom: none;
 }
 
+.table-link {
+  color: #1d4ed8;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.table-link:hover,
+.table-link:focus-visible {
+  color: #1e40af;
+  text-decoration: underline;
+  outline: none;
+}
+
 .actions-column {
   width: 1%;
   text-align: right;
@@ -249,6 +262,43 @@
 
 .state-message.error {
   color: #b42318;
+}
+
+.details-panel {
+  border: 1px solid #dbe3ee;
+  background: #ffffff;
+}
+
+.details-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.details-list div {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  border-bottom: 1px solid #e5ebf2;
+}
+
+.details-list div:last-child {
+  border-bottom: none;
+}
+
+.details-list dt,
+.details-list dd {
+  margin: 0;
+  padding: 14px 16px;
+}
+
+.details-list dt {
+  background: #eef2f7;
+  color: #344054;
+  font-weight: 700;
+}
+
+.details-list dd {
+  color: #101828;
 }
 
 @media (max-width: 720px) {
@@ -293,5 +343,9 @@
   .row-actions select,
   .secondary-button {
     width: 100%;
+  }
+
+  .details-list div {
+    grid-template-columns: 1fr;
   }
 }

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import OrderDetailsPage from './pages/OrderDetailsPage';
 import OrdersPage from './pages/OrdersPage';
 import './App.css';
 
@@ -47,7 +48,12 @@ function App() {
 
   const renderContent = () => {
     if (path === '/orders') {
-      return <OrdersPage />;
+      return <OrdersPage onNavigate={navigate} />;
+    }
+
+    const orderDetailsMatch = path.match(/^\/orders\/(\d+)$/);
+    if (orderDetailsMatch) {
+      return <OrderDetailsPage orderId={orderDetailsMatch[1]} onNavigate={navigate} />;
     }
 
     return (

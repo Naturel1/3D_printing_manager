@@ -223,3 +223,5 @@ alembic/
 
 # Junie
 .junie/
+.codex/
+.agents
