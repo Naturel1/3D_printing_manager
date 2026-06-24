@@ -45,11 +45,72 @@
 }
 
 .nav-link:hover,
-.nav-link:focus-visible {
+.nav-link:focus-visible,
+.nav-link.active {
   background: #e3ebf5;
   border-color: #c7d4e3;
   color: #101828;
   outline: none;
+}
+
+.main-content {
+  padding: 24px 28px 32px;
+}
+
+.page-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #101828;
+}
+
+.section-header p {
+  margin: 6px 0 0;
+  color: #667085;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid #dbe3ee;
+  background: #ffffff;
+}
+
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+}
+
+.orders-table th,
+.orders-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid #e5ebf2;
+}
+
+.orders-table th {
+  background: #eef2f7;
+  font-weight: 700;
+  color: #344054;
+}
+
+.orders-table tr:last-child td {
+  border-bottom: none;
+}
+
+.empty-cell,
+.state-message {
+  padding: 16px 14px;
+  color: #667085;
+}
+
+.state-message.error {
+  color: #b42318;
 }
 
 @media (max-width: 720px) {
@@ -64,5 +125,9 @@
 
   .nav-link {
     flex: 1 1 calc(50% - 12px);
+  }
+
+  .main-content {
+    padding-inline: 16px;
   }
 }
